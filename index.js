@@ -1,11 +1,11 @@
 const express = require('express')
 const app = express()
-const port = 9000 ;
+const port = 5000 ;
 
 
 
 app.get('/' , (req,res)=>{
-    console.log("Hello Back-end Developer")
+    res.send("Hello Back-end Developer")
 })
 
 app.listen(port , () =>{
