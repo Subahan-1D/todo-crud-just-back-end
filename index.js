@@ -1,5 +1,6 @@
 const express = require("express");
 const app = express();
+var jwt = require("jsonwebtoken");
 const mongoose = require("mongoose");
 const port = process.env.PORT || 5000;
 
@@ -44,6 +45,27 @@ async function main() {
       "Pinged your deployment. You successfully connected to MongoDB!"
     );
 
+    app.get(
+      "/todo",
+      async (req, res, next) => {
+        console.log("ami tor badha");
+        console.log(req.headers);
+        const token = req.headers.authorization;
+        const privatekey = "secret";
+        const verifiedToken = jwt.verify(token, privatekey);
+        console.log(verifiedToken);
+        if (verifiedToken) {
+          next();
+        }
+        else{
+          res.send("You are not authorization")
+        }
+      },
+      async (req, res) => {
+        const todos = await Todo.find({});
+        res.send(todos);
+      }
+    );
     app.post("/todo", async (req, res) => {
       const todoData = req.body;
       // const todo = new Todo(todoData);
@@ -51,11 +73,6 @@ async function main() {
       const todo = await Todo.create(todoData);
       console.log(todo);
       res.send(todo);
-    });
-
-    app.get("/todo", async (req, res) => {
-      const todos = await Todo.find({});
-      res.send(todos);
     });
 
     app.get("/todo/:id", async (req, res) => {
@@ -96,16 +113,25 @@ async function main() {
         password,
       });
       if (user) {
+        const payload = {
+          name: user.name,
+          email: user.email,
+        };
+        const privatekey = "secret";
+        const expireTime = "2d";
+        const accessToken = jwt.sign(payload, privatekey, {
+          expiresIn: expireTime,
+        });
         const userResponse = {
           message: "LodgedIn Successfully",
-          data:{
-            name:user.name,
-            email:user.email
+          data: {
+            accessToken,
           },
         };
         res.send(userResponse);
+      } else {
+        res.send("Email or Password not Correct");
       }
-      res.send("Email or Password not Correct");
     });
   } finally {
     // Ensures that the client will close when you finish/error
